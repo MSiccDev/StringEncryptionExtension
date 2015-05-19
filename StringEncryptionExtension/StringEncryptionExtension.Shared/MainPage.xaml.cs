@@ -48,14 +48,14 @@ namespace StringEncryptionExtension
 
         private void EncyptionButton_OnClick(object sender, RoutedEventArgs e)
         {
-            ResultTB.Text = InputTextBox.Text.EncryptString(PSKTB.Text);
+            ResultTB.Text = InputTextBox.Text.EncryptStringSymmetric(PSKTB.Text);
         }
 
         private void DecryptionButton_OnClick(object sender, RoutedEventArgs e)
         {
             InputTextBox.Text = ResultTB.Text;
 
-            ResultTB.Text = InputTextBox.Text.DecryptString(PSKTB.Text);
+            ResultTB.Text = InputTextBox.Text.DecryptStringSymmetric(PSKTB.Text);
         }
 
         private void GetPSKButton_OnClick(object sender, RoutedEventArgs e)

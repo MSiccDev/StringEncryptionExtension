@@ -3,6 +3,7 @@ using System.Text;
 using Windows.Security.Cryptography;
 using Windows.Security.Cryptography.Core;
 using Windows.Storage.Streams;
+using Windows.System.UserProfile;
 
 namespace StringEncryptionExtension
 {
@@ -19,6 +20,8 @@ namespace StringEncryptionExtension
         /// <returns>pre shared key string representation</returns>
         private static string GetPreSharedKey()
         {
+            
+
             //todo: implement your logic for a pre shared key here
             return null;
         }
@@ -29,7 +32,7 @@ namespace StringEncryptionExtension
         /// <param name="text">string to encrypt</param>
         /// <param name="psk">pre shared key used to encrypt</param>
         /// <returns></returns>
-        public static string EncryptString(this string text, string psk = null)
+        public static string EncryptStringSymmetric(this string text, string psk = null)
         {
             //if no PSK is provided, load it from the PreSharedKey method. 
             //remember to save this key securely between your apps or provide a key that is unique but available to both platforms!
@@ -106,7 +109,7 @@ namespace StringEncryptionExtension
         /// <param name="text">base64 string to decrypt</param>
         /// <param name="psk">pre shared key used to decrypt</param>
         /// <returns></returns>
-        public static string DecryptString(this string text, string psk = null)
+        public static string DecryptStringSymmetric(this string text, string psk = null)
         {
             //if no PSK is provided, load it from the PreSharedKey method. 
             //remember to save this key securely between your apps or provide a key that is unique but available to both platforms!
@@ -178,6 +181,8 @@ namespace StringEncryptionExtension
             }
 
         }
+
+
 
     }
 
