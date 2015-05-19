@@ -22,6 +22,9 @@ namespace StringEncryptionExtension
     /// </summary>
     public sealed partial class MainPage : Page
     {
+        private string pubKey = string.Empty;
+        private string privKey = string.Empty;
+
         public MainPage()
         {
             this.InitializeComponent();
@@ -48,14 +51,23 @@ namespace StringEncryptionExtension
 
         private void EncyptionButton_OnClick(object sender, RoutedEventArgs e)
         {
-            ResultTB.Text = InputTextBox.Text.EncryptStringSymmetric(PSKTB.Text);
+            //ResultTB.Text = InputTextBox.Text.EncryptStringSymmetric(PSKTB.Text);
+
+            //getting the KeyPair
+            var keyPair = StringEncryptionExtensions.GetAssymetricKeyPair();
+            privKey = keyPair["private"];
+            pubKey = keyPair["public"];
+            
+            ResultTB.Text = InputTextBox.Text.EncryptStringAsymmetric(pubKey);
         }
 
         private void DecryptionButton_OnClick(object sender, RoutedEventArgs e)
         {
             InputTextBox.Text = ResultTB.Text;
 
-            ResultTB.Text = InputTextBox.Text.DecryptStringSymmetric(PSKTB.Text);
+            //ResultTB.Text = InputTextBox.Text.DecryptStringSymmetric(PSKTB.Text);
+
+            ResultTB.Text = InputTextBox.Text.DecryptStringAsymmetric(privKey);
         }
 
         private void GetPSKButton_OnClick(object sender, RoutedEventArgs e)

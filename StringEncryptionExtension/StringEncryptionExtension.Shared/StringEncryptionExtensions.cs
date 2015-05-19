@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Text;
 using Windows.Security.Cryptography;
 using Windows.Security.Cryptography.Core;
@@ -14,6 +15,8 @@ namespace StringEncryptionExtension
         {
         }
 
+
+        #region symmetric key encryption
         /// <summary>
         /// Method to obtain a pre shared key
         /// </summary>
@@ -182,8 +185,126 @@ namespace StringEncryptionExtension
 
         }
 
+        #endregion
 
 
+
+        #region asymmetric key encryption
+
+
+        /// <summary>
+        /// Method to get a new asymmetric KeyPair
+        /// </summary>
+        /// <returns>Dictionary with a private and a public Key</returns>
+        public static Dictionary<string, string> GetAssymetricKeyPair()
+        {
+            //declaring the Key Algortihm Provider and creating the KeyPair
+            var asymmetricKeyProvider = AsymmetricKeyAlgorithmProvider.OpenAlgorithm(AsymmetricAlgorithmNames.RsaPkcs1);
+            CryptographicKey cryptographicKeyPair = asymmetricKeyProvider.CreateKeyPair(512);
+
+            //converting the KeyPair into IBuffers
+            IBuffer privateKeyBuffer = cryptographicKeyPair.Export(CryptographicPrivateKeyBlobType.Pkcs1RsaPrivateKey);
+            IBuffer publicKeyBuffer = cryptographicKeyPair.ExportPublicKey(CryptographicPublicKeyBlobType.Pkcs1RsaPublicKey);
+
+            //encoding the key IBuffers into Base64 Strings and adding them to a new Dictionary
+            var keyDictionary = new Dictionary<string, string>
+            {
+                {"private", CryptographicBuffer.EncodeToBase64String(privateKeyBuffer)},
+                {"public", CryptographicBuffer.EncodeToBase64String(publicKeyBuffer)}
+            };
+
+            //return new Dictionary
+            return keyDictionary;
+        }
+
+
+        /// <summary>
+        /// encrypts a string using asymmetric key encryption
+        /// </summary>
+        /// <param name="text">the string to encrypt</param>
+        /// <param name="publicKey">the public key portion of the asymmetric key</param>
+        /// <returns>a Base64 encoded and encrypted string</returns>
+        public static string EncryptStringAsymmetric(this string text, string publicKey)
+        {
+            //making sure we are providing a public key
+            if (string.IsNullOrEmpty(publicKey))
+            {
+                throw new NullReferenceException("No public Key available. Please make sure you provide a public key for encryption.");
+            }
+
+            try
+            {
+                //converting the public key into an IBuffer
+                IBuffer keyBuffer = CryptographicBuffer.DecodeFromBase64String(publicKey);
+                
+                //load the public key and the algorithm provider
+                var asymmetricAlgorithmProvider = AsymmetricKeyAlgorithmProvider.OpenAlgorithm(AsymmetricAlgorithmNames.RsaPkcs1);
+                var cryptoKey = asymmetricAlgorithmProvider.ImportPublicKey(keyBuffer, CryptographicPublicKeyBlobType.Pkcs1RsaPublicKey);
+
+                //converting the string into an IBuffer
+                IBuffer buffer = CryptographicBuffer.CreateFromByteArray(Encoding.UTF8.GetBytes(text));
+
+                string encryptedString = "";
+
+                //perform the encryption
+                encryptedString = CryptographicBuffer.EncodeToBase64String(CryptographicEngine.Encrypt(cryptoKey, buffer, null));
+
+                //return the Base64 string representation of the encrypted string
+                return encryptedString;
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+
+        }
+
+
+        /// <summary>
+        /// decrypts an encrypted string 
+        /// </summary>
+        /// <param name="text">the string to decrypt</param>
+        /// <param name="privateKey">the private key portion of the asymmetric key</param>
+        /// <returns>plain decrypted string</returns>
+        public static string DecryptStringAsymmetric(this string text, string privateKey)
+        {
+            //making sure we are providing a public key
+            if (string.IsNullOrEmpty(privateKey))
+            {
+                throw new NotImplementedException("No private Key available. Please make sure you provide a private key for encryption.");
+            }
+
+            try
+            {
+                //converting the private key into an IBuffer
+                IBuffer keyBuffer = CryptographicBuffer.DecodeFromBase64String(privateKey);
+
+                //load the private key and the algorithm provider
+                var asymmetricAlgorithmProvider = AsymmetricKeyAlgorithmProvider.OpenAlgorithm(AsymmetricAlgorithmNames.RsaPkcs1);
+                var cryptoKey = asymmetricAlgorithmProvider.ImportKeyPair(keyBuffer, CryptographicPrivateKeyBlobType.Pkcs1RsaPrivateKey);
+
+                //converting the encrypted text into an IBuffer
+                IBuffer buffer = CryptographicBuffer.DecodeFromBase64String(text);
+
+                //cdecrypting the IBuffer and convert its content into a Byte array 
+                byte[] decryptedBytes;
+                CryptographicBuffer.CopyToByteArray(CryptographicEngine.Decrypt(cryptoKey, buffer, null), out decryptedBytes);
+
+                string decryptedString = "";
+
+                //getting back the plain text 
+                decryptedString = Encoding.UTF8.GetString(decryptedBytes, 0, decryptedBytes.Length);
+
+                return decryptedString;
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+
+        }
+
+        #endregion
     }
 
 }
