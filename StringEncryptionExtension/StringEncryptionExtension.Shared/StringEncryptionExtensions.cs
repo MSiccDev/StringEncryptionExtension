@@ -28,7 +28,7 @@ namespace StringEncryptionExtension
         /// <returns>pre shared key string representation</returns>
         public static string GetPreSharedKey(string resource = null, string username = null, string key = null)
         {
-            if (string.IsNullOrEmpty(resource) && string.IsNullOrEmpty(username))
+            if (string.IsNullOrEmpty(resource) && string.IsNullOrEmpty(username) && string.IsNullOrEmpty(key))
             {
                 //replace with your resource name if suitable
                 resource = "symmetricKey";
