@@ -291,12 +291,13 @@ namespace StringEncryptionExtension
         /// <param name="text">the string to encrypt</param>
         /// <param name="publicKey">the public key portion of the asymmetric key</param>
         /// <returns>a Base64 encoded and encrypted string</returns>
-        public static string EncryptStringAsymmetric(this string text, string publicKey)
+        public static string EncryptStringAsymmetric(this string text, string publicKey = null)
         {
             //making sure we are providing a public key
             if (string.IsNullOrEmpty(publicKey))
             {
-                throw new NullReferenceException("No public Key available. Please make sure you provide a public key for encryption.");
+                var keyPairs = GetAsymmetricKeyPair();
+                publicKey = keyPairs["asymmetricPublicKey"];
             }
 
             try
@@ -333,12 +334,15 @@ namespace StringEncryptionExtension
         /// <param name="text">the string to decrypt</param>
         /// <param name="privateKey">the private key portion of the asymmetric key</param>
         /// <returns>plain decrypted string</returns>
-        public static string DecryptStringAsymmetric(this string text, string privateKey)
+        public static string DecryptStringAsymmetric(this string text, string privateKey = null)
         {
             //making sure we are providing a public key
             if (string.IsNullOrEmpty(privateKey))
             {
-                throw new NotImplementedException("No private Key available. Please make sure you provide a private key for encryption.");
+                    var keyPairs = GetAsymmetricKeyPair();
+                privateKey = keyPairs["asymmetricPrivateKey"];
+
+                
             }
 
             try
