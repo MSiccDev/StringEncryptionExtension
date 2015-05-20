@@ -10,6 +10,9 @@ namespace StringEncryptionExtension
 {
     public static class StringEncryptionExtensions
     {
+
+        //using PasswordVault enables our app to securely save encryption keys between platforms as it is roaming between TRUSTED devices!
+        //to learn more about trusted devices: http://windows.microsoft.com/en-us/windows-8/what-is-trusted-device
         private static PasswordVault _passwordVault;
 
         static StringEncryptionExtensions()
@@ -222,22 +225,60 @@ namespace StringEncryptionExtension
         /// Method to get a new asymmetric KeyPair
         /// </summary>
         /// <returns>Dictionary with a private and a public Key</returns>
-        public static Dictionary<string, string> GetAssymetricKeyPair()
+        public static Dictionary<string, string> GetAsymmetricKeyPair(string username = null)
         {
-            //declaring the Key Algortihm Provider and creating the KeyPair
-            var asymmetricKeyProvider = AsymmetricKeyAlgorithmProvider.OpenAlgorithm(AsymmetricAlgorithmNames.RsaPkcs1);
-            CryptographicKey cryptographicKeyPair = asymmetricKeyProvider.CreateKeyPair(512);
+            Dictionary<string, string> keyDictionary;
+            const string privKey = "asymmetricPrivateKey";
+            const string pubKey = "asymmetricPublicKey";
 
-            //converting the KeyPair into IBuffers
-            IBuffer privateKeyBuffer = cryptographicKeyPair.Export(CryptographicPrivateKeyBlobType.Pkcs1RsaPrivateKey);
-            IBuffer publicKeyBuffer = cryptographicKeyPair.ExportPublicKey(CryptographicPublicKeyBlobType.Pkcs1RsaPublicKey);
-
-            //encoding the key IBuffers into Base64 Strings and adding them to a new Dictionary
-            var keyDictionary = new Dictionary<string, string>
+            if (string.IsNullOrEmpty(username))
             {
-                {"private", CryptographicBuffer.EncodeToBase64String(privateKeyBuffer)},
-                {"public", CryptographicBuffer.EncodeToBase64String(publicKeyBuffer)}
-            };
+                //replace with your user's name/identifier 
+                username = "sampleUserName";
+            }
+
+            //using try catch as FindAllByResource will throw an exception anyways if the specified resource is not found
+            try
+            {
+                //search for our save asymmetric keys
+                var findAsymmetricPrivateKey = _passwordVault.FindAllByResource(privKey);
+                //calling RetrievePassword you MUST!
+                findAsymmetricPrivateKey[0].RetrievePassword();
+                var findAsymmetricPublicKey = _passwordVault.FindAllByResource(pubKey);
+                //calling RetrievePassword you MUST!
+                findAsymmetricPublicKey[0].RetrievePassword();
+
+                //loading our keys into a new Dictionary
+                keyDictionary = new Dictionary<string, string>()
+                {
+                    {privKey, findAsymmetricPrivateKey[0].Password},
+                    {pubKey, findAsymmetricPublicKey[0].Password}
+                };
+            }
+            catch (Exception)
+            {
+                //declaring the Key Algortihm Provider and creating the KeyPair
+                var asymmetricKeyProvider =
+                    AsymmetricKeyAlgorithmProvider.OpenAlgorithm(AsymmetricAlgorithmNames.RsaPkcs1);
+                CryptographicKey cryptographicKeyPair = asymmetricKeyProvider.CreateKeyPair(512);
+
+                //converting the KeyPair into IBuffers
+                IBuffer privateKeyBuffer =
+                    cryptographicKeyPair.Export(CryptographicPrivateKeyBlobType.Pkcs1RsaPrivateKey);
+                IBuffer publicKeyBuffer =
+                    cryptographicKeyPair.ExportPublicKey(CryptographicPublicKeyBlobType.Pkcs1RsaPublicKey);
+
+                //encoding the key IBuffers into Base64 Strings and adding them to a new Dictionary
+                keyDictionary = new Dictionary<string, string>
+                {
+                    {privKey, CryptographicBuffer.EncodeToBase64String(privateKeyBuffer)},
+                    {pubKey, CryptographicBuffer.EncodeToBase64String(publicKeyBuffer)}
+                };
+
+                //saving the newly generated keys in PasswordVault
+                _passwordVault.Add(new PasswordCredential(privKey, username, keyDictionary[privKey]));
+                _passwordVault.Add(new PasswordCredential(pubKey, username, keyDictionary[pubKey]));
+            }
 
             //return new Dictionary
             return keyDictionary;
