@@ -67,17 +67,9 @@ namespace StringEncryptionExtension
         public static string EncryptStringSymmetric(this string text, string psk = null)
         {
             //if no PSK is provided, load it from the PreSharedKey method. 
-            //remember to save this key securely between your apps or provide a key that is unique but available to both platforms!
             if (string.IsNullOrEmpty(psk))
             {
-                if (string.IsNullOrEmpty(GetPreSharedKey()))
-                {
-                    throw new NullReferenceException("Encryption is only secure with a pre shared key. Please make sure GetPreSharedKey() returns a valid string.");
-                }
-                else
-                {
-                    psk = GetPreSharedKey();
-                }
+                psk = GetPreSharedKey();
             }
 
             //load the key and hash alghorithm providers
@@ -144,17 +136,9 @@ namespace StringEncryptionExtension
         public static string DecryptStringSymmetric(this string text, string psk = null)
         {
             //if no PSK is provided, load it from the PreSharedKey method. 
-            //remember to save this key securely between your apps or provide a key that is unique but available to both platforms!
             if (string.IsNullOrEmpty(psk))
             {
-                if (string.IsNullOrEmpty(GetPreSharedKey()))
-                {
-                    throw new NullReferenceException("Encryption is only secure with a pre shared key. Please make sure GetPreSharedKey() returns a valid string.");
-                }
-                else
-                {
-                    psk = GetPreSharedKey();
-                }
+                psk = GetPreSharedKey();
             }
 
             //load the key and hash alghorithm providers
