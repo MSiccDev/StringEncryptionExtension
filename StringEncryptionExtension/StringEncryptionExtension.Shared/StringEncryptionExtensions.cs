@@ -1,18 +1,20 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using Windows.Security.Credentials;
 using Windows.Security.Cryptography;
 using Windows.Security.Cryptography.Core;
 using Windows.Storage.Streams;
-using Windows.System.UserProfile;
 
 namespace StringEncryptionExtension
 {
     public static class StringEncryptionExtensions
     {
+        private static PasswordVault _passwordVault;
 
         static StringEncryptionExtensions()
         {
+            _passwordVault = new PasswordVault();
         }
 
 
@@ -20,13 +22,37 @@ namespace StringEncryptionExtension
         /// <summary>
         /// Method to obtain a pre shared key
         /// </summary>
+        /// <param name="resource">the resource name which will be used to get the key back</param>
+        /// <param name="username">the username from your app</param>
+        /// <param name="key">your own pre shared key</param>
         /// <returns>pre shared key string representation</returns>
-        private static string GetPreSharedKey()
+        public static string GetPreSharedKey(string resource = null, string username = null, string key = null)
         {
-            
+            if (string.IsNullOrEmpty(resource) && string.IsNullOrEmpty(username))
+            {
+                //replace with your resource name if suitable
+                resource = "symmetricKey";
+                //replace with your user's name/identifier
+                username = "sampleUserName";
+                //generating a new Key as password
+                key = Guid.NewGuid().ToString() + "_" + DateTime.Now.Ticks.ToString();
+            }
 
-            //todo: implement your logic for a pre shared key here
-            return null;
+            //using try catch as FindAllByResource will throw an exception anyways if the specified resource is not found
+            try
+            {
+                //search for our saved symmetric key
+                var findSymmetricKey = _passwordVault.FindAllByResource(resource);
+                //calling RetrievePassword you MUST!
+                findSymmetricKey[0].RetrievePassword();
+                key = findSymmetricKey[0].Password;
+            }
+            catch (Exception)
+            {
+                _passwordVault.Add(new PasswordCredential(resource, username, key));
+            }
+            
+            return key;
         }
 
         /// <summary>
@@ -43,7 +69,7 @@ namespace StringEncryptionExtension
             {
                 if (string.IsNullOrEmpty(GetPreSharedKey()))
                 {
-                    throw new NullReferenceException("Encryption is only secure with a pre shared key. Please make sure PreSharedKey() returns a valid string.");
+                    throw new NullReferenceException("Encryption is only secure with a pre shared key. Please make sure GetPreSharedKey() returns a valid string.");
                 }
                 else
                 {
@@ -120,7 +146,7 @@ namespace StringEncryptionExtension
             {
                 if (string.IsNullOrEmpty(GetPreSharedKey()))
                 {
-                    throw new NullReferenceException("Encryption is only secure with a pre shared key. Please make sure PreSharedKey() returns a valid string.");
+                    throw new NullReferenceException("Encryption is only secure with a pre shared key. Please make sure GetPreSharedKey() returns a valid string.");
                 }
                 else
                 {
