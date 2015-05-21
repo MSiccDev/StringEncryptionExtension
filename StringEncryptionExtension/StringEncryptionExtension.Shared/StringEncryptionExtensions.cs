@@ -23,11 +23,10 @@ namespace StringEncryptionExtension
 
         #region symmetric key encryption
         /// <summary>
-        /// Method to obtain a pre shared key
+        /// Method to obtain an encryption key
         /// </summary>
         /// <param name="resource">the resource name which will be used to get the key back</param>
         /// <param name="username">the username from your app</param>
-        /// <param name="key">your own pre shared key</param>
         /// <returns>pre shared key string representation</returns>
         public static string GetKeyMaterialString(string resource = null, string username = null)
         {
@@ -67,8 +66,7 @@ namespace StringEncryptionExtension
         /// encrypts a string
         /// </summary>
         /// <param name="text">string to encrypt</param>
-        /// <param name="psk">pre shared key used to encrypt</param>
-        /// <returns></returns>
+        /// <returns>encrypted Base64 encoded string</returns>
         public static string EncryptStringSymmetric(this string text)
         {
             string encryptedString = "";
@@ -102,8 +100,7 @@ namespace StringEncryptionExtension
         /// decyrpts an encrypted base64 string
         /// </summary>
         /// <param name="text">base64 string to decrypt</param>
-        /// <param name="psk">pre shared key used to decrypt</param>
-        /// <returns></returns>
+        /// <returns>plain text string, decrypted</returns>
         public static string DecryptStringSymmetric(this string text)
         {
             string decryptedString = "";
@@ -171,9 +168,12 @@ namespace StringEncryptionExtension
                 findAsymmetricPublicKey[0].RetrievePassword();
 
                 //loading our keys into a new Dictionary
+                //it is recommended to save the both keys separated from each other, though
                 keyDictionary = new Dictionary<string, string>()
                 {
                     {privKey, findAsymmetricPrivateKey[0].Password},
+                    //saved here for demonstration purposes only
+                    //it is up to you to save it in a different location!
                     {pubKey, findAsymmetricPublicKey[0].Password}
                 };
             }

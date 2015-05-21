@@ -72,12 +72,7 @@ namespace StringEncryptionExtension
             //ResultTB.Text = InputTextBox.Text.DecryptStringAsymmetric();
         }
 
-        private void GetPSKButton_OnClick(object sender, RoutedEventArgs e)
-        {
-            //this is used for demonstration purposes only
-            //PSKTB.Text = StringEncryptionExtensions.GetKeyMaterialString();
-            //GetPSKButton.IsEnabled = false;
-        }
+
 
         private void ClearEncDecButton_OnClick(object sender, RoutedEventArgs e)
         {
