@@ -105,7 +105,7 @@ namespace StringEncryptionExtension
         {
             string decryptedString = "";
 
-            //try catch because of the chance of a too short PSK
+            
             try
             {
                 //load the alghorithm providers
