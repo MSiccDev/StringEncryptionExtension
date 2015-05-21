@@ -29,17 +29,17 @@ namespace StringEncryptionExtension
         /// <param name="username">the username from your app</param>
         /// <param name="key">your own pre shared key</param>
         /// <returns>pre shared key string representation</returns>
-        public static string GetPreSharedKey(string resource = null, string username = null, string key = null)
+        public static string GetKeyMaterialString(string resource = null, string username = null)
         {
-            if (string.IsNullOrEmpty(resource) && string.IsNullOrEmpty(username) && string.IsNullOrEmpty(key))
+            string key = "";
+
+            if (string.IsNullOrEmpty(resource) && string.IsNullOrEmpty(username))
             {
                 //replace with your resource name if suitable
                 resource = "symmetricKey";
                 //replace with your user's name/identifier
-                username = "sampleUserName";
-                //generating a new Key as password
-                key = Guid.NewGuid().ToString() + "_" + DateTime.Now.Ticks.ToString();
-            }
+                username = "sampleUserName";                                
+            }            
 
             //using try catch as FindAllByResource will throw an exception anyways if the specified resource is not found
             try
@@ -52,6 +52,11 @@ namespace StringEncryptionExtension
             }
             catch (Exception)
             {
+                //getting a true random key buffer with a length of 32 bytes
+                IBuffer randomKeyBuffer = CryptographicBuffer.GenerateRandom(32);
+
+                key = CryptographicBuffer.EncodeToBase64String(randomKeyBuffer); 
+
                 _passwordVault.Add(new PasswordCredential(resource, username, key));
             }
             
@@ -64,65 +69,31 @@ namespace StringEncryptionExtension
         /// <param name="text">string to encrypt</param>
         /// <param name="psk">pre shared key used to encrypt</param>
         /// <returns></returns>
-        public static string EncryptStringSymmetric(this string text, string psk = null)
+        public static string EncryptStringSymmetric(this string text)
         {
-            //if no PSK is provided, load it from the PreSharedKey method. 
-            if (string.IsNullOrEmpty(psk))
-            {
-                psk = GetPreSharedKey();
-            }
-
-            //load the key and hash alghorithm providers
-            var symmetricKeyProvider = SymmetricKeyAlgorithmProvider.OpenAlgorithm(SymmetricAlgorithmNames.AesCbcPkcs7);
-            var hashAlghorithmProvider = HashAlgorithmProvider.OpenAlgorithm(HashAlgorithmNames.Sha1);
-            //create a new hash object
-            CryptographicHash AEShash = hashAlghorithmProvider.CreateHash();
-
             string encryptedString = "";
 
-            //try catch because of the chance of a too short PSK
-            try
-            {
-                //getting psk as byte array
-                byte[] pSkBytes = Encoding.UTF8.GetBytes(psk);
-                //declare a new hash byte array
-                byte[] hash = new byte[32];
+            //try
+            //{
+                //load the alghorithm providers
+                var symmetricKeyProvider = SymmetricKeyAlgorithmProvider.OpenAlgorithm(SymmetricAlgorithmNames.AesCbcPkcs7);
 
-                //[] key must have a length of 32 bytes
-                //if pskBytes is long enough, use it
-                if (pSkBytes.Length >= 32)
-                {
-                    Array.Copy(pSkBytes, 0, hash, 0, 32);
-                }
-                //if pskbytes is too short, append it two times together 
-                //the CryptographicBuffer.CreateFromByteArray() method creates a 16 byte array even if you provide only a single letter/number as pre shared key
-                else
-                {
-                    AEShash.Append(CryptographicBuffer.CreateFromByteArray(Encoding.UTF8.GetBytes(psk)));
-
-                    byte[] temp;
-                    CryptographicBuffer.CopyToByteArray(AEShash.GetValueAndReset(), out temp);
-
-                    Array.Copy(temp, 0, hash, 0, 16);
-                    Array.Copy(temp, 0, hash, 15, 16);
-                }
-
-                //create the symmetric key that is used to encrypt the string from the hash bytes array
-                var AESkey = symmetricKeyProvider.CreateSymmetricKey(CryptographicBuffer.CreateFromByteArray(hash));
+                //create the symmetric key that is used to encrypt the string from random keystring
+                var cryptoKey = symmetricKeyProvider.CreateSymmetricKey(CryptographicBuffer.DecodeFromBase64String(GetKeyMaterialString()));
 
                 //create the IBuffer that is for the string
                 IBuffer buffer = CryptographicBuffer.CreateFromByteArray(Encoding.UTF8.GetBytes(text));
 
                 //encrypt the byte array with the symmetric key
-                encryptedString = CryptographicBuffer.EncodeToBase64String(CryptographicEngine.Encrypt(AESkey, buffer, null));
+                encryptedString = CryptographicBuffer.EncodeToBase64String(CryptographicEngine.Encrypt(cryptoKey, buffer, null));
 
                 //return the Base64 string representation of the encrypted string byte array
                 return encryptedString;
-            }
-            catch (Exception ex)
-            {
-                return null;
-            }
+            //}
+            //catch (Exception)
+            //{
+            //    return null;
+            //}
 
         }
 
@@ -133,65 +104,32 @@ namespace StringEncryptionExtension
         /// <param name="text">base64 string to decrypt</param>
         /// <param name="psk">pre shared key used to decrypt</param>
         /// <returns></returns>
-        public static string DecryptStringSymmetric(this string text, string psk = null)
+        public static string DecryptStringSymmetric(this string text)
         {
-            //if no PSK is provided, load it from the PreSharedKey method. 
-            if (string.IsNullOrEmpty(psk))
-            {
-                psk = GetPreSharedKey();
-            }
-
-            //load the key and hash alghorithm providers
-            var symmetricKeyProvider = SymmetricKeyAlgorithmProvider.OpenAlgorithm(SymmetricAlgorithmNames.AesCbcPkcs7);
-            var hashAlghorithmProvider = HashAlgorithmProvider.OpenAlgorithm(HashAlgorithmNames.Sha1);
-            //create a new hash object
-            CryptographicHash AEShash = hashAlghorithmProvider.CreateHash();
-
             string decryptedString = "";
 
             //try catch because of the chance of a too short PSK
             try
             {
-                //getting psk as byte array
-                byte[] pSkBytes = Encoding.UTF8.GetBytes(psk);
-                //declare a new hash byte array
-                byte[] hash = new byte[32];
+                //load the alghorithm providers
+                var symmetricKeyProvider = SymmetricKeyAlgorithmProvider.OpenAlgorithm(SymmetricAlgorithmNames.AesCbcPkcs7);
 
-                //[] key must have a length of 32 bytes
-                //if pskBytes is long enough, use it
-                if (pSkBytes.Length >= 32)
-                {
-                    Array.Copy(pSkBytes, 0, hash, 0, 32);
-                }
-                //if pskbytes is too short, append it two times together 
-                //the CryptographicBuffer.CreateFromByteArray() method creates a 16 byte array even if you provide only a single letter/number as pre shared key
-                else
-                {
-                    AEShash.Append(CryptographicBuffer.CreateFromByteArray(Encoding.UTF8.GetBytes(psk)));
-
-                    byte[] temp;
-                    CryptographicBuffer.CopyToByteArray(AEShash.GetValueAndReset(), out temp);
-
-                    Array.Copy(temp, 0, hash, 0, 16);
-                    Array.Copy(temp, 0, hash, 15, 16);
-                }
-
-                //create the symmetric key that is used to encrypt the string from the hash bytes array
-                var AESkey = symmetricKeyProvider.CreateSymmetricKey(CryptographicBuffer.CreateFromByteArray(hash));
+                //create the symmetric key that is used to encrypt the string from random keystring
+                var cryptoKey = symmetricKeyProvider.CreateSymmetricKey(CryptographicBuffer.DecodeFromBase64String(GetKeyMaterialString()));
 
                 //decode the input Base64 string
                 IBuffer buffer = CryptographicBuffer.DecodeFromBase64String(text);
                 //declare new byte array
                 byte[] dectryptedBytes;
                 //decrypt the IBuffer back to byte array
-                CryptographicBuffer.CopyToByteArray(CryptographicEngine.Decrypt(AESkey, buffer, null), out dectryptedBytes);
+                CryptographicBuffer.CopyToByteArray(CryptographicEngine.Decrypt(cryptoKey, buffer, null), out dectryptedBytes);
                 //get string back from the byte array
                 decryptedString = Encoding.UTF8.GetString(dectryptedBytes, 0, dectryptedBytes.Length);
 
                 //return plain text
                 return decryptedString;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return null;
             }
