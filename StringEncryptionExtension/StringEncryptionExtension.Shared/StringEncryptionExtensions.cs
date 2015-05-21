@@ -73,8 +73,8 @@ namespace StringEncryptionExtension
         {
             string encryptedString = "";
 
-            //try
-            //{
+            try
+            {
                 //load the alghorithm providers
                 var symmetricKeyProvider = SymmetricKeyAlgorithmProvider.OpenAlgorithm(SymmetricAlgorithmNames.AesCbcPkcs7);
 
@@ -89,11 +89,11 @@ namespace StringEncryptionExtension
 
                 //return the Base64 string representation of the encrypted string byte array
                 return encryptedString;
-            //}
-            //catch (Exception)
-            //{
-            //    return null;
-            //}
+            }
+            catch (Exception)
+            {
+                return null;
+            }
 
         }
 
